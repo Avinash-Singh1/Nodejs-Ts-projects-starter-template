@@ -1,13 +1,16 @@
-import { Router } from "express";
-import { createUser, getAllUser, getAllUsers, getUserid } from "../controllers/userController";
+import { Router } from 'express';
+import { getAllUser, getUserid, createUser, register, login } from '../controllers/userController';
+import protect from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/',getAllUsers);
+// Public routes
+router.post('/register', register);  // Register a user
+router.post('/login', login);        // Login a user
 
-// Define a route for a specific user
-router.post('/create',createUser);
-router.get('/alluser',getAllUser);
-router.get('/:id',getUserid);
-  
-  export default router;
+// Protected routes
+router.get('/', protect, getAllUser);        // Get all users
+router.get('/:id', protect, getUserid);  // Get user by ID
+router.post('/', protect, createUser);     // Create a new user
+
+export default router;

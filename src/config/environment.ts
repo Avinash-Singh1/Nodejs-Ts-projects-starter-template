@@ -7,6 +7,6 @@ dotenv.config({ path: path.resolve(__dirname, `../../environment/.env.${env}`) }
 export const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
-  mongoUri: process.env.MONGO_URI || '',
-  jwtSecret: process.env.JWT_SECRET || '',
+  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/myDatabase',
+  jwtSecret: process.env.JWT_SECRET || 'mongodb://localhost:27017/myDatabase',
 };
