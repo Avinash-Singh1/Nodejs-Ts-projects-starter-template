@@ -5,6 +5,7 @@ import { config } from './config/environment';
 import indexRoutes from './routes/index';
 import useRoutes from './routes/users';
 import logApiHits from './middleware/logApiHits';
+
 const app = express();
 app.use(logApiHits);
 // Use the port from config

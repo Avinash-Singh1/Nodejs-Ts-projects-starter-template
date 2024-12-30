@@ -1,0 +1,15 @@
+
+2024-12-30T12:19:27.520Z: ::1 GET: /
+2024-12-30T12:19:41.415Z: ::1 GET: /users/89
+2024-12-30T12:19:48.202Z: ::1 GET: /users/
+2024-12-30T12:20:14.701Z: ::1 POST: /users/login
+2024-12-30T12:20:24.311Z: ::1 GET: /users/
+2024-12-30T12:20:40.488Z: ::1 GET: /users/
+[2024-12-30T12:24:58.458Z]
+Method: GET
+Path: /
+Query: {}
+Body: {"email":"jassi","password":"jassi"}
+IP: ::1
+Response Status: 200
+Response Time: 75ms

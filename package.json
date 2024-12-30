@@ -4,12 +4,14 @@
   "description": "",
   "main": "index.js",
 "scripts": {
-  "start:dev": "cross-env NODE_ENV=development ts-node src/index.ts",
-  "start:prod": "cross-env NODE_ENV=production ts-node src/index.ts",
+  "start:dev": "nodemon --watch src --exec cross-env NODE_ENV=development ts-node src/index.ts",
+  "start:prod": "cross-env NODE_ENV=production node dist/index.js",
   "build": "tsc",
-  "start": "cross-env NODE_ENV=production node dist/index.js"
-}
-,
+  "start": "npm run start:prod",
+  "dev-server": "nodemon --watch src --exec ts-node src/index.ts",
+  "build:watch": "tsc -w",
+  "start:tsc": "npx tsc -w"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
