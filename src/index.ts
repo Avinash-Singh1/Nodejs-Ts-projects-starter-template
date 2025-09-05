@@ -4,6 +4,7 @@ import connectDB from './config/db';
 import { config } from './config/environment';
 import indexRoutes from './routes/index';
 import useRoutes from './routes/users';
+import registerRoute from './routes/registration';
 const app = express();
 // Use the port from config
 const port = config.port;
@@ -15,6 +16,7 @@ app.use(express.json());
 // Define a basic route
 app.use('/',indexRoutes);
 app.use('/users',useRoutes);
+app.use('/api/v1',registerRoute);
 
 // Start the server
 app.listen(port, () => {
