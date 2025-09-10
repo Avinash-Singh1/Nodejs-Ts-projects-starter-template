@@ -6,6 +6,7 @@ import { compareHash, generateAuthJwt } from '../utils/auth';
 import response from '../utils/response';
 import { config } from '../config/environment';
 import Doctor from '../models/Doctor';
+import Session from '../models/Session'; 
 
 const genericInvalid = () => ({ msgCode: 'INVALID_CREDENTIALS' });
 
@@ -119,4 +120,96 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export default { login };
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // 1) Try to obtain token from multiple sources
+    const authHeader = (req.headers?.authorization || req.headers?.Authorization || '') as string;
+    let token: string | undefined;
+
+    if (authHeader && typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')) {
+      token = authHeader.slice(7).trim();
+    }
+
+    if (!token && req.body && req.body.token) {
+      token = String(req.body.token).trim();
+    }
+
+    if (!token && req.query && (req.query.token as string)) {
+      token = String(req.query.token as string).trim();
+    }
+
+    if (!token && req.cookies && (req.cookies.token as string)) {
+      token = String(req.cookies.token as string).trim();
+    }
+
+    // 2) Try to accept deviceId from body/query/cookies
+    const deviceId =
+      (req.body && req.body.deviceId) ||
+      (req.query && req.query.deviceId) ||
+      (req.cookies && req.cookies.deviceId) ||
+      null;
+
+    // 3) If your auth middleware attaches the decoded user, we can use it (optional)
+    // e.g., req.user = { userId: '...', ... }
+    const userFromReq = (req as any).user ?? null;
+
+    // If nothing found, return validation error
+    if (!token && !deviceId && !userFromReq) {
+      response.error(
+        { msgCode: 'VALIDATION_ERROR', data: { message: 'token or deviceId is required' } },
+        res,
+        httpStatus.BAD_REQUEST
+      );
+      return;
+    }
+
+    // 4) Delete matching sessions. Be tolerant: if any removal fails continue.
+    let deletedCount = 0;
+    const deletedSessions: any[] = [];
+
+    if (token) {
+      try {
+        const s = await Session.findOneAndDelete({ jwt: token }).exec();
+        if (s) {
+          deletedCount += 1;
+          deletedSessions.push(s);
+        }
+      } catch (err) {
+        console.warn('[logout] removal by token failed', err);
+      }
+    }
+
+    if (deviceId) {
+      try {
+        const sessions = await Session.find({ deviceId }).exec();
+        if (sessions && sessions.length) {
+          const ids = sessions.map((ss: any) => ss._id);
+          await Session.deleteMany({ _id: { $in: ids } }).exec();
+          deletedCount += sessions.length;
+          deletedSessions.push(...sessions);
+        }
+      } catch (err) {
+        console.warn('[logout] removal by deviceId failed', err);
+      }
+    }
+
+    // Optional: support "logout all devices for this user" if you have userId context
+    // If req.user exists (populated by auth middleware) you can delete by userId:
+    // if (!token && !deviceId && userFromReq?.userId) {
+    //   await Session.deleteMany({ userId: userFromReq.userId }).exec();
+    // }
+
+    // Return success (idempotent)
+    response.success(
+      { msgCode: 'LOGOUT_SUCCESS', data: { deletedCount, sessions: deletedSessions.length ? true : false } },
+      res,
+      httpStatus.OK
+    );
+    return;
+  } catch (err) {
+    console.error('[auth] logout error:', err);
+    response.error({ msgCode: 'INTERNAL_SERVER_ERROR' }, res, httpStatus.INTERNAL_SERVER_ERROR);
+    return;
+  }
+};
+export default { login,logout };

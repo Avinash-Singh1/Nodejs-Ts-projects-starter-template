@@ -78,6 +78,50 @@ const constants = {
 
   // Other defaults
   DEFAULT_STATUS: 2, // e.g. active status
+
+  // ===============================
+  // 🔥 Added constants for Doctor/Appointment flows
+  // ===============================
+
+  // Sorting constants
+  LIST: {
+    ORDER: {
+      ASC: 1,
+      DESC: -1,
+    },
+  },
+
+  // For filtering doctor-patient lists
+  DOCTOR_PATIENT_LIST: {
+    TODAY: 'TODAY',
+    ALL: 'ALL',
+  },
+
+  // Appointment slots (example values, adjust to your business logic)
+  SLOT: [1, 2, 3, 4, 5, 6, 7, 8], // morning/evening slot IDs, expand as needed
+
+  // Who cancelled the appointment
+  CANCEL_BY: {
+    DOCTOR: 1,
+    PATIENT: 2,
+    SYSTEM: 3,
+  },
+
+  // Appointment booking status
+  BOOKING_STATUS: {
+    BOOKED: 1,
+    CANCELLED: 2,
+    COMPLETED: 3,
+  },
+
+  // Types of consultation
+  CONSULTATION_TYPES: {
+    VIDEO: 'video',
+    IN_CLINIC: 'in_clinic',
+  },
+
+  // Default "not available" value for projections
+  NA: 'N/A',
 };
 
 export default constants;

@@ -1,7 +1,9 @@
 // src/utils/auth.ts
-import bcrypt from 'bcrypt';
-import jwt, { Secret, SignOptions } from 'jsonwebtoken';
-import { config } from '../config/environment';
+import bcrypt from "bcrypt";
+import jwt, { Secret, SignOptions } from "jsonwebtoken";
+import { config } from "../config/environment";
+import { Request, Response, NextFunction } from "express";
+import response from "./response"; // use your response util for consistent responses
 
 export const generateHash = async (plain: string): Promise<string> => {
   const saltRounds = 10;
@@ -25,7 +27,7 @@ export interface JwtPayloadCustom {
  */
 export const generateAuthJwt = (
   payload: JwtPayloadCustom,
-  expiresIn?: SignOptions['expiresIn']
+  expiresIn?: SignOptions["expiresIn"]
 ): string => {
   const tokenPayload = {
     userId: payload.userId,
@@ -33,12 +35,10 @@ export const generateAuthJwt = (
     fullName: payload.fullName,
   };
 
-  // ensure secret is a type acceptable to jsonwebtoken
-  const secret: Secret = config.jwtSecret as Secret;
+  const secret: Secret = (config.jwtSecret || "secret") as Secret;
 
-  // prefer passed expiresIn, otherwise fall back to config
   const signOptions: SignOptions = {
-    expiresIn: expiresIn ?? (config.jwtExpiresIn as SignOptions['expiresIn']),
+    expiresIn: expiresIn ?? (config.jwtExpiresIn as SignOptions["expiresIn"]),
   };
 
   return jwt.sign(tokenPayload as Record<string, unknown>, secret, signOptions);
@@ -57,9 +57,51 @@ export const verifyAuthJwt = (token: string): JwtPayloadCustom | null => {
   }
 };
 
+/**
+ * Express middleware: verifyAuthToken
+ * - Expects `Authorization: Bearer <token>` header
+ * - On success attaches `req.data = { userId, userType, fullName }`
+ * - On failure responds 401 using response.error(...) and does not call next()
+ */
+export function verifyAuthToken(req: Request, res: Response, next: NextFunction) {
+  console.log("Hi");
+  try {
+    const authHeader = (req.headers.authorization || "") as string;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      response.error({ msgCode: "UNAUTHORIZED" }, res, 401);
+      return;
+    }
+
+    const token = authHeader.split(" ")[1];
+    const payload = verifyAuthJwt(token);
+
+    if (!payload || !payload.userId) {
+      response.error({ msgCode: "UNAUTHORIZED" }, res, 401);
+      return;
+    }
+
+    // attach user info to req.data for controllers to consume
+    (req as any).data = {
+      userId: payload.userId,
+      userType: payload.userType,
+      fullName: payload.fullName,
+    };
+
+    return next();
+  } catch (err) {
+    console.error("verifyAuthToken error:", err);
+    response.error({ msgCode: "UNAUTHORIZED" }, res, 401);
+    return;
+  }
+}
+
+/**
+ * Default export keeps legacy compatibility while also exporting named functions above.
+ */
 export default {
   generateHash,
   compareHash,
   generateAuthJwt,
   verifyAuthJwt,
+  verifyAuthToken,
 };
